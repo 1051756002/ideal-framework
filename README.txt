@@ -1,0 +1,99 @@
+
+-----------------------------
+--  ideal框架简介
+-----------------------------
+
+     一. 目录介绍
+      ./project
+          assets/
+               framework/ ............... 框架目录
+               game/ .................... 游戏目录
+                    cp1/ ................ 产品1 (项目)
+                    cp2/ ................ 产品2 (项目)
+               hall/ .................... 大厅目录 (项目)
+                    res/ ................ 资源目录
+                         anims/ ......... 动画文件目录
+                         imgs/ .......... 图片资源目录
+                         prefabs/ ....... 预制文件目录
+                         protos/ ........ pb文件目录
+                         sounds/ ........ 音效文件目录
+                    scene/ .............. 场景目录
+                    script/ ............. 脚本目录
+                         core/ .......... 项目核心目录
+                         fix/ ........... 常驻层目录
+                         page/ .......... 页面目录
+                         pop/ ........... 弹窗目录
+                         prefab/ ........ 预制脚本目录
+                         util/ .......... 公用方法目录
+               main.fire ................ 项目总入口场景
+          build-templates/ .............. 打包模板文件目录
+          version_generator.js .......... 热更新版本文件生成脚本(node.js)
+
+     二. 规范
+          1. [必选] 项目下任何文件的命名必须加上项目名, 例如main场景文件: [project]_main.fire
+
+          2. [必选] 脚本文件命名规范: 
+               1) 页面文件, 例如Test页面: [project]_pageTest.js
+               2) 弹窗文件, 例如Test弹窗: [project]_popTest.js
+               3) 常驻文件, 例如Test常驻: [project]_fixTest.js
+               4) 预制文件, 例如Test预制: [project]_test.js
+
+          3. [可选] 节点命名规范: 
+               1) 以节点类型作为前缀且统一小写, 类型如下: 
+                    1) lbl      => cc.Label
+                    2) lay      => cc.Node (显示隐藏的层或节点容器)
+                    3) btn      => cc.Button
+                    4) edit     => cc.EditBox
+                    5) scroller => cc.ScrollView
+                    6) progress => cc.ProgressBar
+
+                    例子: lbl-msg, lay-wrap, btn-login, edit-username, scroller-serverlist, progress-update
+
+               2) 节点绑定的脚本文件中, 对应节点的属性命名统一以驼峰式命名
+
+                    例子: lblMsg, layWrap, btnLogin, editUserName, scrollerServerList, progressUpdate
+
+               3) 脚本绑定统一绑定在根节点, 方便分析和管理 (绑定在页面或弹窗节点上)
+
+               4) 页面中按钮点击事件命名, 统一使用onTouch作为前缀, 便于查看
+
+                    例子: btnLogin => onTouchLogin, btnAttack, onTouchAttack
+
+          4. [必选] 页面的根节点需要以驼峰式命名(与脚本文件名前缀后面的格式一致)
+
+               例子: pageHall, popTips, fixLoading
+
+          5. [必选] 节点定位: 
+               1) Page定位于Canvas节点下
+               2) Pop定位于Canvas节点同级, 且在入口场景定义, 便于加入常驻节点
+               3) Fix定位于Canvas节点同级, 且在入口场景定义, 便于加入常驻节点
+
+          6. [必选] 脚本组件: 
+               1) basePage: 页面脚本需要继承的基类
+               2) basePop: 弹窗脚本需要继承的基类
+               3) baseEntry: 入口场景需要继承的基类
+               4) adapCanvas: 让Canvas支持屏幕适配
+               5) adapBackground: 让界面的背景图支持屏幕适配
+
+     三. API
+          ideal.config ............................... 框架配置
+
+          ideal.util ................................. 公用方法类
+
+          ideal.ui ................................... UI控制
+               ideal.ui.go ........................... 切换到指定项目
+               ideal.ui.show ......................... 显示当前项目中的指定视图
+               ideal.ui.hide ......................... 隐藏当前项目中的指定视图
+               ideal.ui.refresh ...................... 刷新当前项目中的指定视图, 暂未实现
+               ideal.ui.project ...................... 获取当前正在运行的项目配置
+
+          ideal.pb ................................... PB管理类
+
+          ideal.conn ................................. Socket通讯管理类
+
+          ideal.http ................................. HTTP请求管理类
+
+          ideal.sound ................................ 音效管理类
+
+          ideal.data ................................. 数据管理类, 暂未实现
+
