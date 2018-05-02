@@ -118,3 +118,14 @@
 
           ideal.data ................................. 数据管理类, 暂未实现
 
+     四. 项目工程生成
+          框架源码SVN: https://210.77.144.81/svn/mj_src_new/h5_framework
+
+          通过执行根目录下的 framework_install.js 脚本来生成项目工程
+
+          参数解释:
+               -n/--name 设置项目名
+               -p/--path 设置项目存放地址, 默认为当前目录的上一级
+
+          例子: node framework_install.js -n 项目名 -p 项目地址
+          
