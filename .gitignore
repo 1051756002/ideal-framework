@@ -1,0 +1,6 @@
+.svn/
+build/
+library/
+local/
+settings/
+temp/
