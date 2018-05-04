@@ -128,4 +128,7 @@
                -p/--path 设置项目存放地址, 默认为当前目录的上一级
 
           例子: node framework_install.js -n 项目名 -p 项目地址
-          
+     
+
+     Page, Pop, Fix
+

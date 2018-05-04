@@ -97,6 +97,22 @@ _util.olen = function(obj) {
 };
 
 /**
+ * 通过值获取对象中的键名
+ * @Author   Zjw
+ * @DateTime 2018-05-04
+ * @param    {Object}                 obj 需要查找的对象
+ * @param    {Any}                    val 需要用于判定的值
+ * @return   {String}
+ */
+_util.okey = function(obj, val) {
+	for (let i in obj) {
+		if (obj[i] == val) {
+			return i;
+		}
+	}
+};
+
+/**
  * 合并对象
  * @Author   Zjw
  * @DateTime 2018-04-12

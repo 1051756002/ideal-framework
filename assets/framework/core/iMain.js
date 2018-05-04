@@ -4,7 +4,13 @@ let ideal = window.ideal = {};
  * Ideal框架配置对象
  * @type {iConfig}
  */
-ideal.config = require('iConfig')
+ideal.config = require('iConfig');
+
+/**
+ * 字体颜色, 目前用于打日志时使用
+ * @type {iFontColor}
+ */
+ideal.color = require('iFontColor');
 
 /**
  * 公用方法管理类 (开辟全局作用域)
@@ -29,6 +35,18 @@ ideal.view = require('iViewMgr');
  * @type {iProtobuf}
  */
 // ideal.pb = require('iProtobuf');
+
+/**
+ * 指令类, 用于TCP通讯 (开辟全局作用域)
+ * @type {ServiceCmd}
+ */
+ideal.CMD = window.CMD = require('ServiceCmd');
+
+/**
+ * 事件类, 用于通知UI层事件
+ * @type {ServiceEvent}
+ */
+ideal.Event = require('ServiceEvent');
 
 /**
  * TCP网络管理类

@@ -18,7 +18,7 @@ heartbeat.prototype.start = function(connector) {
 
 	this.next();
 
-	this.conn.on('beat', this.onBeat, this);
+	ideal.net.on('beat', this.onBeat, this);
 };
 
 heartbeat.prototype.next = function() {
@@ -40,7 +40,7 @@ heartbeat.prototype.next = function() {
 
 heartbeat.prototype.stop = function() {
 	clearTimeout(this.STID_BEAT);
-	this.conn.off('beat');
+	ideal.net.off('beat');
 };
 
 heartbeat.prototype.onBeat = function() {

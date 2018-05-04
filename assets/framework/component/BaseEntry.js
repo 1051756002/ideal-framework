@@ -97,13 +97,6 @@ cc.Class({
                 }
             };
         };
-        // 载入服务模块
-        let u_service = require('Service');
-        if (u_service != null) {
-            for (let i in u_service) {
-                ideal.service.add(u_service[i]);
-            };
-        };
     },
 
     /**
