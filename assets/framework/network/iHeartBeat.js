@@ -6,7 +6,7 @@ let heartbeat = function() {
 	// 发送时间
 	this.sendTime = 0;
 	// 心跳范围时间
-	this.beatTimeLimit = 10000;
+	this.beatTimeLimit = 100000;
 };
 
 heartbeat.prototype.start = function(connector) {
@@ -18,7 +18,7 @@ heartbeat.prototype.start = function(connector) {
 
 	this.next();
 
-	ideal.net.on('beat', this.onBeat, this);
+	ideal.on('beat', this.onBeat, this);
 };
 
 heartbeat.prototype.next = function() {
@@ -40,11 +40,11 @@ heartbeat.prototype.next = function() {
 
 heartbeat.prototype.stop = function() {
 	clearTimeout(this.STID_BEAT);
-	ideal.net.off('beat');
+	ideal.off('beat');
 };
 
 heartbeat.prototype.onBeat = function() {
-	util.log('du ~');
+	iUtil.log('du ~');
 	this.lastTime = Date.now();
 };
 

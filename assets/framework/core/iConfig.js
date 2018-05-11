@@ -16,7 +16,7 @@ config.pureLog = false;
 config.enableCache = true;
 
 // 客户端版本号
-config.version = '0.0.5';
+config.version = '0.1.0';
 
 // 客户端设计尺寸
 config.designWidth = 1136;
@@ -27,9 +27,10 @@ config.wxShareTitle = 'ideal-framework';
 // 微信分享图标
 config.wxShareIcon = 'http://gametest.xingdong.co/songyuan_h5/res/raw-assets/icon.b068d.png',
 
-// 依赖脚本列表
-config.scriptlist = [
-	'http://res.wx.qq.com/open/js/jweixin-1.1.0.js',
-];
+// 依赖内容
+config.depend = {
+	prefab: [ ['FixLoading', 0], ['PopTips', 1], ['FixMsg', 2] ],
+	js: [ 'http://res.wx.qq.com/open/js/jweixin-1.1.0.js' ],
+};
 
 module.exports = config;

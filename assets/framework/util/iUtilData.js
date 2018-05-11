@@ -17,7 +17,7 @@ _util.clone = function(obj) {
 		str = JSON.stringify(obj), newobj = JSON.parse(str);
 	} else {
 		for (var i in obj) {
-			newobj[i] = typeof obj[i] === 'object' ? util.clone(obj[i]) : obj[i];
+			newobj[i] = typeof obj[i] === 'object' ? iUtil.clone(obj[i]) : obj[i];
 		}
 	}
 	return newobj;
@@ -71,7 +71,7 @@ _util.md5 = function(content) {
 	let md5 = require('../core/iMd5');
 
 	if ( typeof md5 == 'function') {
-		return md5(util.trim(content));
+		return md5(iUtil.trim(content));
 	} else {
 		return content;
 	}

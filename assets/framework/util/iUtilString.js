@@ -42,11 +42,11 @@ _util.toTime2 = function(use_time, sys_time) {
 
 	// 显示日期
 	if (diff_time > date_time || use_day != sys_day) {
-		return util.fmtDate(use_time);
+		return iUtil.fmtDate(use_time);
 	}
 	// 显示时间
 	else {
-		return util.fmtDate2(use_time);
+		return iUtil.fmtDate2(use_time);
 	}
 };
 
@@ -59,11 +59,11 @@ _util.toTime2 = function(use_time, sys_time) {
 _util.fmtDate = function(obj) {
 	let date = new Date(obj);
 	let y = 1900 + date.getYear();
-	let M = util.zeroize(date.getMonth() + 1);
-	let d = util.zeroize(date.getDate());
-	let h = util.zeroize(date.getHours());
-	let m = util.zeroize(date.getMinutes());
-	return util.format('{2}-{3} {4}:{5}', y, M, d, h, m);
+	let M = iUtil.zeroize(date.getMonth() + 1);
+	let d = iUtil.zeroize(date.getDate());
+	let h = iUtil.zeroize(date.getHours());
+	let m = iUtil.zeroize(date.getMinutes());
+	return iUtil.format('{2}-{3} {4}:{5}', y, M, d, h, m);
 };
 
 /**
@@ -74,9 +74,9 @@ _util.fmtDate = function(obj) {
  */
 _util.fmtDate2 = function(obj) {
 	let date = new Date(obj);
-	let h = util.zeroize(date.getHours());
-	let m = util.zeroize(date.getMinutes());
-	return util.format('{1}:{2}', h, m);
+	let h = iUtil.zeroize(date.getHours());
+	let m = iUtil.zeroize(date.getMinutes());
+	return iUtil.format('{1}:{2}', h, m);
 };
 
 /**

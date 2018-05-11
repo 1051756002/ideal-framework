@@ -4,8 +4,8 @@ cc.Class({
     onLoad: function() {
     	let canvas = this.node.getComponent(cc.Canvas);
 
-    	if (util.isEmpty(canvas)) {
-    		util.log_sys('%-#f00', '未能找到cc.Canvas组件.');
+    	if (iUtil.isEmpty(canvas)) {
+    		iUtil.log_sys('%-#f00', '未能找到cc.Canvas组件.');
     		return;
     	}
         

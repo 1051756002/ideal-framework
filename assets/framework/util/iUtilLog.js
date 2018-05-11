@@ -15,15 +15,15 @@ let log = function() {
 			if (typeof args[0] == 'string') {
 				// 字体颜色仅支持Web端
 				if (cc.sys.isBrowser) {
-					let content = '%c' + util.format.apply(util, args);
+					let content = '%c' + iUtil.format.apply(iUtil, args);
 					let clrcode = 'color:#' + result[1];
 					args = [content, clrcode];
 				} else {
-					args = [util.format.apply(util, args)];
+					args = [iUtil.format.apply(iUtil, args)];
 				}
 			}
 		} else {
-			args = [util.format.apply(util, args)];
+			args = [iUtil.format.apply(iUtil, args)];
 		}
 	}
 

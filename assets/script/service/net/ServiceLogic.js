@@ -25,7 +25,7 @@ ServiceFunc.Send_C_Login = function(data) {
 		proto_ver: 1,
 		skey: '',
 		uid: '',
-		cmd: CMD.C_Login,
+		cmd: iCmd.C_Login,
 		data: {
 			username: data.username,
 			password: data.password,
@@ -56,7 +56,7 @@ ServiceFunc.Send_C_Register = function(data) {
 		proto_ver: 1,
 		skey: '',
 		uid: '',
-		cmd: CMD.C_Register,
+		cmd: iCmd.C_Register,
 		data: {
 			username: data.username,
 			password: data.password,
@@ -76,11 +76,11 @@ ServiceFunc.Send_C_Register = function(data) {
 ServiceFunc.Recv_S_Login = function(data) {
 	if (data.code == 0) {
 		util.log('登录成功');
-		ideal.net.emit(ideal.Event.LoginSuccess);
+		ideal.emit(iEvent.LoginSuccess);
 	}
 	else {
 		util.log('登录失败');
-		ideal.net.emit(ideal.Event.LoginFail);
+		ideal.emit(iEvent.LoginFail);
 	}
 };
 
@@ -93,12 +93,13 @@ ServiceFunc.Recv_S_Login = function(data) {
 ServiceFunc.Recv_S_Register = function(data) {
 	if (data.code == 0) {
 		util.log('注册成功');
-		ideal.net.emit(ideal.Event.RegisterSuccess);
+		ideal.emit(iEvent.RegisterSuccess);
 	}
 	else {
 		util.log('注册失败');
-		ideal.net.emit(ideal.Event.RegisterFail);
+		ideal.emit(iEvent.RegisterFail);
 	}
 };
 
 module.exports = ServiceFunc;
+

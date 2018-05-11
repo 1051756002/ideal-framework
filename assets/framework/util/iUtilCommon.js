@@ -10,7 +10,7 @@ let _util = {};
 _util.isEmpty = function(val) {
     switch (typeof(val)) {
         case 'string':
-            return util.trim(val).length == 0 ? true : false;
+            return iUtil.trim(val).length == 0 ? true : false;
             break;
         case 'number':
             return val == 0;
@@ -37,7 +37,7 @@ _util.isEmpty = function(val) {
  * @return   {Boolean}
  */
 _util.isDefine = function(val) {
-    return !util.isEmpty(val);
+    return !iUtil.isEmpty(val);
 };
 
 /**
@@ -48,14 +48,26 @@ _util.isDefine = function(val) {
  * @param    {string}
  * @return   {string|null}
  */
-_util.getQueryString = function(name, defval) {
+_util.getQueryString = function(name, defval = null, decode = true) {
     let reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)", "i");
     let idx = location.search.indexOf('/');
-    let r = decodeURIComponent(decodeURI(location.search.substr(1))).match(reg);
-    if (r != null) {
-        return decodeURIComponent(decodeURI(r[2]));
+    let content = location.search.substr(1);
+
+    if (decode) {
+        content = decodeURIComponent(decodeURI(content));
     }
-    return util.isDefine(defval) ? decodeURIComponent(decodeURI(defval)) : null;
+
+    let r = content.match(reg);
+    let ret = defval;
+    if (r != null) {
+        if (decode) {
+            ret = decodeURIComponent(decodeURI(r[2]));
+        } else {
+            ret = r[2];
+        }
+    }
+
+    return ret;
 };
 
 /**
@@ -96,7 +108,7 @@ _util.loadJavaScript = function(url, callback) {
     let script = document.createElement('script');
     script.type = 'text/javascript';
     script.src = url;
-    if (util.isDefine(callback)) {
+    if (iUtil.isDefine(callback)) {
         script.onload = function() {
             callback();
         };

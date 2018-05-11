@@ -6,7 +6,7 @@ textureCache.add = function(key, texture) {
 	let source = this._cache[key];
 
 	if (this._cache[key]) {
-		util.log_sys('%-#dcd72c', '纹理Key: "{0}" 已经存在, 未能加入缓存.', key);
+		iUtil.log_sys('%-#dcd72c', '纹理Key: "{0}" 已经存在, 未能加入缓存.', key);
 		return false;
 	}
 
@@ -18,7 +18,7 @@ textureCache.remove = function(key) {
 	let source = this._cache[key];
 
 	if (!this._cache[key]) {
-		util.log_sys('%-#dcd72c', '纹理Key: "{0}" 不存在缓存.', key);
+		iUtil.log_sys('%-#dcd72c', '纹理Key: "{0}" 不存在缓存.', key);
 		return false;
 	}
 

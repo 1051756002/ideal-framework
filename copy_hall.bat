@@ -10,9 +10,11 @@ echo %PROJECT_PATH%
 rd /s/q %PROJECT_PATH%\hall
 rd /s/q %PROJECT_PATH%\res\hall
 rd /s/q %PROJECT_PATH%\resources\hall
+rd /s/q %PROJECT_PATH%\common
 
 cd %PROJECT_PATH%
 xcopy %H5_FRAMEWORK_PATH%\hall hall /s/e/i/y
+xcopy %H5_FRAMEWORK_PATH%\common common /s/e/i/y
 
 cd %PROJECT_PATH%\res
 xcopy %H5_FRAMEWORK_PATH%\res\hall hall /s/e/i/y

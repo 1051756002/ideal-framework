@@ -1,19 +1,19 @@
+let event = require('iEvent');
+
 cc.Class({
 	extends: cc.Component,
 
 	show: function (param) {
 		this.node.active = true;
+		this.bindEvents();
 		this.onShow(param);
-		this.refresh();
 	},
 
 	hide: function () {
 		this.node.active = false;
 		this.onHide();
-	},
 
-	refresh: function(param) {
-		this.onRefresh(param);
+		event.releaseNode(this);
 	},
 
 	/**
@@ -38,12 +38,12 @@ cc.Class({
 	},
 
 	/**
-	 * 刷新函数 (待重写)
+	 * 绑定事件 (待重写)
 	 * @Author   Zjw
-	 * @DateTime 2018-04-12
+	 * @DateTime 2018-05-07
 	 * @return   {void}
 	 */
-	onRefresh: function() {
+	bindEvents: function() {
 		// todo ...
 	},
 });

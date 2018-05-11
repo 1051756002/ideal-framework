@@ -9,10 +9,21 @@ let SocketState = require('iSocketState');
 let __proto = {};
 let STID_LOADING = 0;
 
+// 频繁请求管理池
+let frequentPool = {};
+
 let connector = function() {
+	// 是否拦截连接异常时的Tips弹窗
+	this.interceptTips = false;
+	// 连接器名称, 对应iNet中的键
+	this.name = '';
+	// 已重连次数
 	this.reconn = 0;
+	// 重连次数上限
 	this.reconnLimit = 5;
+	// WebSocket对象
 	this.socket = null;
+	// 连接状态
 	this.state = SocketState.Waiting;
 };
 
@@ -21,25 +32,26 @@ let connector = function() {
  * @Author   Zjw
  * @DateTime 2018-05-02
  * @param    {Object}                 err 异常对象
- * @return   {Void}
+ * @return   {void}
  */
 __proto.error = function(err) {
-	util.log_net(err);
+	iUtil.log_net('连接器: ' + this.name);
+	iUtil.log_net(err);
 
 	switch (err.type) {
 		// 确认=重连
 		case 2:
-			util.tips(err.msg, this.reconnect.bind(this));
+			iUtil.tips(err.msg, this.reconnect.bind(this));
 			break;
 		// 确认=重连, 取消=重启
 		case 3:
-			util.tips(err.msg, this.reconnect.bind(this), function() {
-				util.log('重启');
+			iUtil.tips(err.msg, this.reconnect.bind(this), function() {
+				iUtil.log('重启');
 			});
 			break;
 		// 确认=关闭弹窗
 		default:
-			util.tips(err.msg);
+			iUtil.tips(err.msg);
 			break;
 	}
 };
@@ -50,19 +62,58 @@ __proto.error = function(err) {
  * @DateTime 2018-04-24
  * @param    {String}                 cmd  指令名
  * @param    {Object}                 data 需要发送的数据对象
- * @return   {Void}
+ * @return   {Boolean}                请求是否顺利进入Service层, 被拦截的情况下会返回false
  */
-__proto.send = function(cmd = '', data = {}) {
+__proto.send = function(cmd, data = {}) {
 	if (this.state != SocketState.Connected) {
-		this.error({
-			type: 2,
-			msg: '与服务器连接中断，请尝试重连！',
-		});
-		return;
+		// this.error({
+		// 	type: 2,
+		// 	msg: '与服务器连接中断，请尝试重连！',
+		// });
+		let key = iUtil.okey(ideal.cmd, cmd) || cmd;
+		iUtil.log_sys('%-'+ideal.color.Warn, '警告: {0} 请求发送失败, 连接器非连接状态.', key);
+		return false;
 	}
-	service.sendMsg(cmd, data);
+
+	if (!frequentPool[cmd]) {
+		frequentPool[cmd] = Date.now();
+	} else {
+		// 限制时间, 0.2秒
+		let limitTime = 200;
+		let now = Date.now();
+		// 相同请求发送过于频繁, 拦截
+		if (now <= frequentPool[cmd] + limitTime) {
+			let key = iUtil.okey(ideal.cmd, cmd) || cmd;
+			iUtil.log_sys('%-'+ideal.color.Warn, '警告: {0} 请求发送过于频繁.', key);
+			return false;
+		}
+		frequentPool[cmd] = now;
+	}
+
+	// 心跳包
+	if (cmd == 'beat') {
+		this.sendMsg({ cmd: 1 });
+	} else {
+		let key = iUtil.okey(ideal.cmd, cmd);
+
+		if (key) {
+			service.sendMsg(key, data);
+		} else {
+			iUtil.log_sys('%-'+ideal.color.Warn, '警告: iCmd 中没有找到 "{0}" 发送指令.', cmd);
+		}
+	}
+
+	return true;
 };
 
+/**
+ * 向服务器发送消息 (供Service层使用, 不建议在UI层直接调用此方法)
+ * @Author   Zjw
+ * @DateTime 2018-04-24
+ * @param    {String}                 cmd  指令名
+ * @param    {Object}                 data 需要发送的数据对象
+ * @return   {void}
+ */
 __proto.sendMsg = function(data = {}) {
 	if (this.state != SocketState.Connected) {
 		this.error({
@@ -73,7 +124,7 @@ __proto.sendMsg = function(data = {}) {
 	}
 
 	if (config.notlog_send && config.notlog_send.indexOf(data.cmd) == -1) {
-		util.log_net('%-#0fe029', '发送: cmd={0}', data.cmd);
+		iUtil.log_net('%-#0fe029', '发送: cmd={0}', data.cmd);
 	}
 
 	this.socket.send(JSON.stringify(data));
@@ -85,7 +136,7 @@ __proto.sendMsg = function(data = {}) {
  * @DateTime 2018-04-24
  * @param    {String}                 url      服务器地址
  * @param    {Function}               callback 回调函数
- * @return   {Void}
+ * @return   {void}
  */
 __proto.connect = function(serverUrl = null, callback) {
 	// 只传入了回调函数
@@ -108,13 +159,20 @@ __proto.connect = function(serverUrl = null, callback) {
 	// 连接成功回调
 	let openFn = function(ev) {
 		this.reconn = 0;
-		util.log_net('%-#de590b', 'connect success.');
 		callback && callback();
+
+		// 通知网络连接成功事件
+		ideal.emit(iEvent.NetConnected, {
+			name: this.name,
+			url: this.socket.url,
+		});
+
+		iUtil.log_net('%-#de590b', 'connect success.');
 	}.bind(this);
 
 	// 连接中断回调
 	let closeFn = function(ev) {
-		util.log_net('%-#de590b', '网络中断.');
+		iUtil.log_net('%-#de590b', '网络中断.');
 		this.error({
 			type: 2,
 			msg: '与服务器断开了，请尝试重连！'
@@ -123,18 +181,18 @@ __proto.connect = function(serverUrl = null, callback) {
 
 	// 连接异常回调
 	let errorFn = function(ev) {
-		util.log_net('%-#de590b', 'TCP网络错误: {0}', JSON.stringify(ev));
+		iUtil.log_net('%-#de590b', 'TCP网络错误: {0}', JSON.stringify(ev));
 	}.bind(this);
 
-	util.log_net('%-#de590b', 'TCP服务器连接: {0}', serverUrl);
-	this.openSocket(serverUrl, openFn, closeFn, errorFn);
+	iUtil.log_net('%-#de590b', 'TCP服务器连接: {0}', serverUrl);
+	this._openSocket(serverUrl, openFn, closeFn, errorFn);
 };
 
 /**
  * 重连TCP服务器
  * @Author   Zjw
  * @DateTime 2018-04-24
- * @return   {Void}
+ * @return   {void}
  */
 __proto.reconnect = function() {
 	if (this.socket == null) {
@@ -152,7 +210,7 @@ __proto.reconnect = function() {
 		return;
 	}
 
-	util.log_net('第{0}/{1}次尝试重连...', this.reconn, this.reconnLimit);
+	iUtil.log_net('第{0}/{1}次尝试重连...', this.reconn, this.reconnLimit);
 	this.state = SocketState.Connecting;
 
 	let url = this.socket.url;
@@ -161,7 +219,14 @@ __proto.reconnect = function() {
 	let openFn = function(ev) {
         this.reconn = 0;
 		this.state = SocketState.Connected;
-		util.log_net('%-#de590b', '重连成功.');
+
+		// 通知网络重连成功事件
+		ideal.emit(iEvent.NetReconnect, {
+			name: this.name,
+			url: this.socket.url,
+		});
+
+		iUtil.log_net('%-#de590b', '重连成功.');
 	}.bind(this);
 
 	// 连接中断回调
@@ -179,10 +244,10 @@ __proto.reconnect = function() {
 
 	// 连接异常回调
 	let errorFn = function(ev) {
-		util.log_net('%-#de590b', 'network error: {0}', JSON.stringify(ev));
+		iUtil.log_net('%-#de590b', 'network error: {0}', JSON.stringify(ev));
 	}.bind(this);
 
-	this.openSocket(url, openFn, closeFn, errorFn);
+	this._openSocket(url, openFn, closeFn, errorFn);
 };
 
 /**
@@ -207,35 +272,84 @@ __proto.interrupt = function(callback) {
 		return false;
 	}
 	this.state = SocketState.Disconnect;
-	this.closeSocket(callback);
+	this._closeSocket(callback);
 	return true;
 };
 
+/**
+ * 与服务器断开且不弹窗
+ * @Author   Zjw
+ * @DateTime 2018-05-09
+ * @return   {void}
+ */
 __proto.disconnect = function() {
 	if (this.state != SocketState.Connected || this.socket.readyState != WebSocket.OPEN) {
 		return false;
 	}
 	this.socket.onclose = function() {
 		this.state = SocketState.Disconnect;
+
+		// 停止心跳包
 		this.heartbeat.stop();
 
+		// 通知网络连接断开
+		ideal.emit(iEvent.NetDisconnect, {
+			name: this.name,
+			url: this.socket.url,
+		});
+
 		clearTimeout(STID_LOADING), STID_LOADING = 0;
-		util.hideLoading && util.hideLoading();
+		iUtil.hideLoading && iUtil.hideLoading();
 	}.bind(this);
+	this._closeSocket();
+	return true;
 };
 
-__proto.openSocket = function(serverUrl, openFn, closeFn, errorFn) {
+/**
+ * 阻止网络中断弹窗提示
+ * @Author   Zjw
+ * @DateTime 2018-05-11
+ * @return   {void}
+ */
+__proto.stopInterruptTips = function() {
+	this.interceptTips = true;
+};
+
+/**
+ * 恢复网络中断弹窗提示
+ * @Author   Zjw
+ * @DateTime 2018-05-11
+ * @return   {void}
+ */
+__proto.resumeInterruptTips = function() {
+	this.interceptTips = false;
+};
+
+/**
+ * 开启WebSocket (此方法私有, 不建议外层调用)
+ * @Author   Zjw
+ * @DateTime 2018-05-09
+ * @param    {String}                 serverUrl 需要连接的服务器地址
+ * @param    {Function}               openFn    连接成功回调
+ * @param    {Function}               closeFn   通讯断开回调
+ * @param    {Function}               errorFn   通讯异常回调
+ * @return   {void}
+ */
+__proto._openSocket = function(serverUrl, openFn, closeFn, errorFn) {
 	try {
 		let socket = this.socket = new WebSocket(serverUrl);
 
 		socket.onopen = function(evt) {
 			this.state = SocketState.Connected;
+
+			// 启动心跳包
 			this.heartbeat = new HeartBeat();
 			this.heartbeat.start(this);
+
 			openFn && openFn(evt);
 
 			clearTimeout(STID_LOADING), STID_LOADING = 0;
-			ideal.util.hideLoading && ideal.util.hideLoading();
+			iUtil.hideLoading && iUtil.hideLoading();
 		}.bind(this);
 
 		socket.onmessage = function(evt) {
@@ -244,28 +358,49 @@ __proto.openSocket = function(serverUrl, openFn, closeFn, errorFn) {
 
 		socket.onclose = function(evt) {
 			this.state = SocketState.Waiting;
+
+			// 停止心跳包
 			this.heartbeat.stop();
-			closeFn && closeFn(evt);
+
+			// 通知网络连接中断事件
+			ideal.emit(iEvent.NetInterrupt, {
+				name: this.name,
+				url: this.socket.url,
+			});
+
+			if (!this.interceptTips) {
+				closeFn && closeFn(evt);
+			}
 
 			clearTimeout(STID_LOADING), STID_LOADING = 0;
-			ideal.util.hideLoading && ideal.util.hideLoading();
+			iUtil.hideLoading && iUtil.hideLoading();
 		}.bind(this);
 
 		socket.onerror = function(evt) {
 			errorFn && errorFn(evt);
 		}.bind(this);
 
+		// 恢复网络中断弹窗提示
+		this.resumeInterruptTips();
+
 		if (STID_LOADING == 0) {
 			STID_LOADING = setTimeout(function() {
-				ideal.util.showLoading && ideal.util.showLoading();
+				iUtil.showLoading && iUtil.showLoading();
 			}, 3000);
 		}
 	} catch (err) {
-		this.error({ msg: '开启Socket失败，或许该浏览器不支持WebSocket' });
+		this.error({ msg: err });
 	}
 };
 
-__proto.closeSocket = function(callback) {
+/**
+ * 关闭WebSocket (此方法私有, 不建议外层调用)
+ * @Author   Zjw
+ * @DateTime 2018-05-09
+ * @param    {Function}               callback 关闭完成回调
+ * @return   {void}
+ */
+__proto._closeSocket = function(callback) {
 	let socket = this.socket;
 
 	if (socket != null && socket.readyState != WebSocket.CLOSED) {
@@ -290,28 +425,38 @@ __proto.closeSocket = function(callback) {
  * @return   {void}
  */
 __proto.receiveMsg = function(buffer) {
-	try {
-		let data = JSON.parse(buffer);
-		let cmd = data.cmd;
+	let fn = function() {
+		let resp = JSON.parse(buffer);
 
-		// 错误消息
-		// if (util.isDefine(data.err_disc)) {
-		// 	this.error({ msg: data.err_disc });
-		// 	return;
-		// }
-
-		let config = require('Config');
-		if (config.notlog_recv && config.notlog_recv.indexOf(cmd) == -1) {
-			util.log_net('%-#ea681c', '接收: cmd={0}', cmd);
+		if (config.notlog_recv && config.notlog_recv.indexOf(resp.cmd) == -1) {
+			iUtil.log_net('%-#ea681c', '接收: cmd={0}', resp.cmd);
 		}
 
-		// 解析指令
-		service.parseMsg(cmd, data);
-	} catch (err) {
-		if (this.state != SocketState.Connecting) {
-			this.error({ msg: err.message });
+		// 心跳包
+		if (resp.cmd == 1) {
+			ideal.emit('beat');
 		} else {
-			throw(err);
+			let key = iUtil.okey(ideal.cmd, resp.cmd);
+
+			if (key) {
+				service.parseMsg(key, resp);
+			} else {
+				iUtil.log_sys('%-'+ideal.color.Warn, '警告: iCmd 中没有找到 "{0}" 接收指令.', resp.cmd);
+			}
+		}
+	};
+
+	if (ideal.config.debug) {
+		fn();
+	} else {
+		try {
+			fn();
+		} catch (err) {
+			if (this.state != SocketState.Connecting) {
+				this.error({ msg: err.message });
+			} else {
+				throw(err);
+			}
 		}
 	}
 };

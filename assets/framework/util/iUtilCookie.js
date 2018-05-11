@@ -13,7 +13,7 @@ _util.getCookie = function (key, defval) {
     if (arr = document.cookie.match(reg)) {
         return unescape(arr[2]);
     }
-    return util.isDefine(defval) ? defval : null;
+    return iUtil.isDefine(defval) ? defval : null;
 };
 
 module.exports = _util;

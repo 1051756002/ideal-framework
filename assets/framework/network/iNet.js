@@ -1,5 +1,4 @@
 let config = require('Config');
-let event = require('iEvent');
 let Connector = require('iConnector');
 
 let net = {};
@@ -14,28 +13,8 @@ let connList = {};
  * @return   {void}
  */
 net.emit = function(types, data) {
-	if (!types) {
-		return false;
-	}
-
-	let type_arr = [];
-	if (typeof types == 'number') {
-		types = types.toString();
-	}
-	if (typeof types == 'string') {
-		type_arr = types.split(',');
-	} else {
-		type_arr = types.slice();
-	}
-
-	if (type_arr.length == 0) {
-		return false;
-	}
-
-	type_arr.forEach(function(type) {
-		event.triggerEvent(type, data);
-	}, this);
-	return true;
+	iUtil.log_sys('%-'+ideal.color.Warn, '警告: ideal.net.emit 即将废弃, 请及时改为 ideal.emit');
+	return ideal.emit(types, data);
 };
 
 /**
@@ -48,28 +27,8 @@ net.emit = function(types, data) {
  * @return   {boolean}
  */
 net.on = function(types, selector, thisObj) {
-	if (!types) {
-		return false;
-	}
-
-	let type_arr = [];
-	if (typeof types == 'number') {
-		types = types.toString();
-	}
-	if (typeof types == 'string') {
-		type_arr = types.split(',');
-	} else {
-		type_arr = types.slice();
-	}
-
-	if (type_arr.length == 0) {
-		return false;
-	}
-
-	type_arr.forEach(function(type) {
-		event.addEventListener(type, selector, thisObj);
-	}, this);
-	return true;
+	iUtil.log_sys('%-'+ideal.color.Warn, '警告: ideal.net.on 即将废弃, 请及时改为 ideal.on');
+	return ideal.on(types, selector, thisObj);
 };
 
 /**
@@ -81,28 +40,8 @@ net.on = function(types, selector, thisObj) {
  * @return   {boolean}
  */
 net.off = function(types, selector) {
-	if (!types) {
-		return false;
-	}
-
-	let type_arr = [];
-	if (typeof types == 'number') {
-		types = types.toString();
-	}
-	if (typeof types == 'string') {
-		type_arr = types.split(',');
-	} else {
-		type_arr = types.slice();
-	}
-
-	if (type_arr.length == 0) {
-		return false;
-	}
-
-	type_arr.forEach(function(type) {
-		event.removeEventListener(type, selector);
-	}, this);
-	return true;
+	iUtil.log_sys('%-'+ideal.color.Warn, '警告: ideal.net.off 即将废弃, 请及时改为 ideal.off');
+	return ideal.off(types, selector);
 };
 
 net.create = function(netName = 'mask', serverUrl = null, callback) {
@@ -129,11 +68,12 @@ net.create = function(netName = 'mask', serverUrl = null, callback) {
 	}
 
 	if (connList[netName]) {
-		util.log_sys('%-#999999', '警告: TCP连接器 "{0}" 已经存在, 创建失败!', netName);
+		iUtil.log_sys('%-#999999', '警告: TCP连接器 "{0}" 已经存在, 创建失败!', netName);
 		return;
 	}
 
 	let conn = new Connector();
+	conn.name = netName;
 	conn.connect(serverUrl, callback);
 	connList[netName] = conn;
 	return conn;
@@ -141,6 +81,19 @@ net.create = function(netName = 'mask', serverUrl = null, callback) {
 
 net.getConnector = function(netName = 'mask') {
 	return connList[netName];
+};
+
+/**
+ * 断开所有TCP连接器
+ * @Author   Zjw
+ * @DateTime 2018-05-11
+ * @return   {void}
+ */
+net.clean = function() {
+	for (let i in connList) {
+		connList[i].disconnect();
+		// delete connList[i];
+	}
 };
 
 module.exports = net;

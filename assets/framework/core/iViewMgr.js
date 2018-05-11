@@ -4,19 +4,27 @@ let ViewMgr = {};
  * 显示
  * @Author   Zjw
  * @DateTime 2018-04-12
- * @param    {string}
- * @param    {object}
+ * 支持以下几种传参:
+ * 1. nodeName<节点名称>, param<传参>
+ * 2. nodeName<节点名称>, model<模块>, param<传参>
  * @return   {void}
  */
-ViewMgr.show = function(nodeName, param) {
-    if (nodeName.slice(0, 4) == 'Page') {
-        this.page.show(nodeName, param);
-    } else if (nodeName.slice(0, 3) == 'Pop') {
-        this.pop.show(nodeName, param);
-    } else if (nodeName.slice(0,3) == 'Fix') {
-        this.fix.show(nodeName, param);
+ViewMgr.show = function() {
+    let args = [];
+    for (let i = 0; i < arguments.length; i++) {
+        args.push(arguments[i]);
+    }
+
+    if (/Page.*/.test(args[0])) {
+        this.page.show.apply(this.page, args);
+    }
+    else if (/Pop.*/.test(args[0])) {
+        this.pop.show.apply(this.pop, args);
+    }
+    else if (/Fix.*/.test(args[0])) {
+        this.fix.show.apply(this.fix, args);
     } else {
-        util.log_sys('%-#f00', '异常: "{0}" 命名格式错误.', nodeName);
+        iUtil.log_sys('%-#f00', '异常: "{0}" 命名格式错误.', args[0]);
     }
 };
 
@@ -33,29 +41,60 @@ ViewMgr.hide = function(nodeName) {
     } else if (nodeName.slice(0,3) == 'Fix') {
         this.fix.hide(nodeName);
     } else {
-        util.log_sys('%-#f00', '异常: "{0}" 命名格式错误.', nodeName);
+        iUtil.log_sys('%-#f00', '异常: "{0}" 命名格式错误.', nodeName);
     }
 };
+
 
 /**
  * 弹窗类
  */
 ViewMgr.pop = {
-    show: function(popName, param) {
-        let p = cc.find(popName);
+    /**
+     * 显示Pop弹窗
+     * @Author   Zjw
+     * @DateTime 2018-05-09
+     * @param    {String}                 popName 节点名称
+     * @param    {String}                 model   模块名称, 也可以传入具体路径(不建议)
+     * @param    {Object}                 param   传参
+     * @return   {void}
+     */
+    show: function(popName, model, param) {
+        let path, p = cc.find(popName);
         if (p != null) {
             p.getComponent('BasePop').show(param);
         } else {
-            util.log_sys('%-#f00', '异常: 没有找到 "{0}" 弹窗.', popName);
+            if (model.startsWith('./')) {
+                path = iUtil.format('{0}/{1}', model, popName);
+            } else {
+                path = iUtil.format('./{0}/prefab/pop/{1}', model, popName);
+            }
+            cc.loader.loadRes(path, function(err, prefab) {
+                if (err) {
+                    iUtil.log_sys('%-' + ideal.color.Error, '异常: 没有找到 {0} 弹窗.', path);
+                    return;
+                }
+
+                let node = cc.instantiate(prefab);
+                cc.director.getScene().addChild(node);
+                node.getComponent('BasePop').show(param);
+            });
         }
     },
 
+    /**
+     * 隐藏Pop弹窗
+     * @Author   Zjw
+     * @DateTime 2018-05-09
+     * @param    {String}                 popName 节点名称
+     * @return   {void}
+     */
     hide: function(popName) {
         let p = cc.find(popName);
         if (p != null) {
             p.getComponent('BasePop').hide();
         } else {
-            util.log_sys('%-#f00', '异常: 没有找到 "{0}" 弹窗.', popName);
+            iUtil.log_sys('%-#f00', '异常: 没有找到 "{0}" 弹窗.', popName);
         }
     },
 };
@@ -65,33 +104,51 @@ ViewMgr.pop = {
  * 常驻节点
  */
 ViewMgr.fix = {
-    // 得到常驻节点
-    getFixed: function(fixName) {
-        for (var i in cc.game._persistRootNodes) {
-            if (fixName == cc.game._persistRootNodes[i]._name) {
-                return cc.game._persistRootNodes[i];
-            }
-        }
-        util.log_sys('%-#f00', '异常: 没有找到 "{0}" 常驻.', fixName);
-    },
-
-    // 显示一个常驻节点
-    show: function(fixName, param) {
-        var p = this.getFixed(fixName);
+    /**
+     * 显示常驻节点
+     * @Author   Zjw
+     * @DateTime 2018-05-09
+     * @param    {String}                 fixName 节点名称
+     * @param    {String}                 model   模块名称, 也可以传入具体路径(不建议)
+     * @param    {Object}                 param   传参
+     * @return   {void}
+     */
+    show: function(fixName, model, param) {
+        let path, p = cc.find(fixName);
         if (p) {
             p.getComponent('BaseNode').show(param);
         } else {
-            util.log_sys('%-#f00', '异常: 没有找到 "{0}" 常驻.', fixName);
+            if (model.startsWith('./')) {
+                path = iUtil.format('{0}/{1}', model, popName);
+            } else {
+                path = iUtil.format('./{0}/prefab/fix/{1}', model, popName);
+            }
+            cc.loader.loadRes(path, function(err, prefab) {
+                if (err) {
+                    iUtil.log_sys('%-' + ideal.color.Error, '异常: 没有找到 {0} 常驻.', path);
+                    return;
+                }
+
+                let node = cc.instantiate(prefab);
+                cc.director.getScene().addChild(node);
+                node.getComponent('BaseFix').show(param);
+            });
         }
     },
 
-    // 隐藏一个常驻节点
+    /**
+     * 隐藏常驻节点
+     * @Author   Zjw
+     * @DateTime 2018-05-09
+     * @param    {String}                 fixName 节点名称
+     * @return   {void}
+     */
     hide: function(fixName) {
-        var p = this.getFixed(fixName);
+        var p = cc.find(fixName);
         if (p) {
             p.getComponent('BaseNode').hide();
         } else {
-            util.log_sys('%-#f00', '异常: 没有找到 "{0}" 常驻.', fixName);
+            iUtil.log_sys('%-#f00', '异常: 没有找到 "{0}" 常驻.', fixName);
         }
     }
 };
@@ -154,13 +211,14 @@ ViewMgr.page = {
      */
     showScene: function(sceneName, pageName, param) {
         let STID_LOADSCENE = setTimeout(function() {
-            util.showLoading && util.showLoading();
+            iUtil.showLoading && iUtil.showLoading();
         }, 120);
 
+        this.localHide();
         cc.director.loadScene(sceneName, function() {
             clearTimeout(STID_LOADSCENE);
-            util.fixedPage();
-            util.hideLoading && util.hideLoading();
+            iUtil.fixedPage();
+            iUtil.hideLoading && iUtil.hideLoading();
             this.localShow(pageName, param);
         }.bind(this));
     },
@@ -177,20 +235,12 @@ ViewMgr.page = {
             if (sceneName) {
                 this.showScene(sceneName, pageName, param);
             } else {
-                util.log_sys('%-#f00', '异常: 没有找到 "{0}" 页面.', pageName);
+                iUtil.log_sys('%-#f00', '异常: 没有找到 "{0}" 页面.', pageName);
             }
         }
     },
-
-    // 刷新页面
-    refresh: function(pageName, param) {
-        var p = (pageName == null ? this.ACTIVE_PAGE : cc.find('Canvas/' + pageName));
-        if (p) {
-            p.getComponent('BaseNode').refresh(param);
-        }
-        return p;
-    }
 };
+
 
 module.exports.show = ViewMgr.show.bind(ViewMgr);
 module.exports.hide = ViewMgr.hide.bind(ViewMgr);

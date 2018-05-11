@@ -20,13 +20,44 @@ cc.Class({
 
     onInit: function() {
         this.initUtil();
-        this.initPersist();
+        this.initDependPrefab();
         // this.initSound();
+    },
 
-        if (config == null) {
-            throw '项目启动失败, 未能找到项目配置文件!';
+    initDependPrefab: function() {
+        let prefabs = ideal.config.depend.prefab;
+
+        if (prefabs.length > 0) {
+            let loaded = 0;
+            for (let i in prefabs) {
+                let pname, pidx;
+                if (prefabs[i] instanceof Array) {
+                    pname = prefabs[i][0];
+                    pidx = prefabs[i][1];
+                } else {
+                    pname = prefabs[i];
+                    pidx = 0;
+                }
+
+                let path = './framework/prefab/' + pname;
+                cc.loader.loadRes(path, function(err, prefab) {
+                    if (err) {
+                        iUtil.log_sys('%-' + ideal.color.Warn, '警告: BaseEntry {0} 读取失败.', path);
+                        return;
+                    }
+
+                    loaded++;
+
+                    let node = cc.instantiate(prefab);
+                    cc.director.getScene().addChild(node, pidx);
+
+                    if (loaded == prefabs.length) {
+                        this.initPersist();
+                    }
+                }.bind(this));
+            };
         } else {
-            this.onShow();
+            this.initPersist();
         }
     },
 
@@ -42,29 +73,11 @@ cc.Class({
                 // 载入常驻节点
                 if (!cc.game.isPersistRootNode(node)) {
                     cc.game.addPersistRootNode(node);
-                    util.log_sys('%-#009999', '常驻节点载入 {0}', node.name);
-
-                    // 强制隐藏
-                    node.active = false;
-
-                    // 重定位到屏幕显示区域
-                    let widget = node.getComponent(cc.Widget);
-                    if (!widget) {
-                        widget = node.addComponent(cc.Widget);
-                    }
-
-                    widget.left = 0;
-                    widget.isAlignLeft = true;
-                    widget.right = 0;
-                    widget.isAlignRight = true;
-                    widget.top = 0;
-                    widget.isAlignTop = true;
-                    widget.bottom = 0;
-                    widget.isAlignBottom = true;
-                    widget.isAlignOnce = true;
+                    iUtil.log_sys('%-#009999', '常驻节点载入 {0}', node.name);
                 }
             }
         }
+        this.initAfter();
     },
 
     // 初始化音效文件
@@ -76,7 +89,7 @@ cc.Class({
 
             let resp = this.sounds[i].match(/\/([a-z|0-9|_]*)\.mp3$/i);
             if (resp == null) {
-                util.log_sys('%-#f00', 'unidentified file types "{0}"', this.sounds[i]);
+                iUtil.log_sys('%-#f00', 'unidentified file types "{0}"', this.sounds[i]);
                 continue;
             }
 
@@ -86,17 +99,35 @@ cc.Class({
 
     // 初始化Util文件
     initUtil: function() {
+        if (ideal._pcfg.enableUtil == undefined) {
+            iUtil.log_sys('%-' + ideal.color.Warn, '警告: Config.js 中没有配置 enableUtil 属性, 请及时增加配置. (本次赋予默认值true)');
+            ideal._pcfg.enableUtil = true;
+        }
+
+        if (!ideal._pcfg.enableUtil) {
+            return;
+        }
+
         // 载入util模块
-        let u_util = require('Util');
+        let rn = 'Util', u_util = require(rn);
         if (u_util != null) {
             for (let i in u_util) {
-                if (util[i] == undefined) {
-                    util[i] = u_util[i];
+                if (iUtil[i] == undefined) {
+                    iUtil[i] = u_util[i];
                 } else {
-                    util.log_sys('%-#999999', '警告: util.{0} 已经存在, 未能加入到Util类中.', i);
+                    iUtil.log_sys('%-#999999', '警告: iUtil.{0} 已经存在, 未能加入到Util类中.', i);
                 }
             };
         };
+    },
+
+    // 所有初始化之后执此行函数
+    initAfter: function() {
+        if (config == null) {
+            throw '项目启动失败, 未能找到项目配置文件!';
+        } else {
+            this.onShow();
+        }
     },
 
     /**
